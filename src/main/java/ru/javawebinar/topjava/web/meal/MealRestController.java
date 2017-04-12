@@ -13,6 +13,7 @@ import ru.javawebinar.topjava.util.MealsUtil;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.Comparator;
 import java.util.List;
 
 import static ru.javawebinar.topjava.util.ValidationUtil.checkIdConsistent;
@@ -44,7 +45,17 @@ public class MealRestController {
     public List<MealWithExceed> getAll() {
         int userId = AuthorizedUser.id();
         LOG.info("getAll for User {}", userId);
-        return MealsUtil.getWithExceeded(service.getAll(userId), AuthorizedUser.getCaloriesPerDay());
+
+        List<MealWithExceed> withExceeded = MealsUtil.getWithExceeded(service.getAll(userId), AuthorizedUser.getCaloriesPerDay());
+        withExceeded.sort(new Comparator<MealWithExceed>() {
+            @Override
+            public int compare(MealWithExceed o1, MealWithExceed o2) {
+                return o2.getDateTime().compareTo(o1.getDateTime());
+
+            }
+        });
+        return withExceeded;
+
     }
 
     public Meal create(Meal meal) {
@@ -65,7 +76,7 @@ public class MealRestController {
         int userId = AuthorizedUser.id();
         LOG.info("getBetween dates({} - {}) time({} - {}) for User {}", startDate, endDate, startTime, endTime, userId);
 
-        return MealsUtil.getFilteredWithExceeded(
+        List<MealWithExceed> filteredWithExceeded = MealsUtil.getFilteredWithExceeded(
                 service.getBetweenDates(
                         startDate != null ? startDate : DateTimeUtil.MIN_DATE,
                         endDate != null ? endDate : DateTimeUtil.MAX_DATE, userId),
@@ -73,5 +84,14 @@ public class MealRestController {
                 endTime != null ? endTime : LocalTime.MAX,
                 AuthorizedUser.getCaloriesPerDay()
         );
+        filteredWithExceeded.sort(new Comparator<MealWithExceed>() {
+            @Override
+            public int compare(MealWithExceed o1, MealWithExceed o2) {
+                return o2.getDateTime().compareTo(o1.getDateTime());
+
+            }
+        });
+
+         return filteredWithExceeded;
     }
 }
